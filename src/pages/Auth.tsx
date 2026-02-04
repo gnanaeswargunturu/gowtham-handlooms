@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Phone, ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Phone, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,37 +10,117 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 type AuthStep = "phone" | "otp" | "profile";
 
 export default function Auth() {
+  const navigate = useNavigate();
+  const { user, profile, signInWithOtp, verifyOtp, updateProfile, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState<AuthStep>("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
+  const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && profile) {
+      if (!profile.full_name) {
+        setStep("profile");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [user, profile, navigate]);
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length !== 10) return;
-    
+
     setIsLoading(true);
-    // Simulate OTP sending - will be replaced with actual Supabase auth
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signInWithOtp(phone);
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error sending OTP",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "OTP Sent",
+        description: `We've sent a verification code to +91 ${phone}`,
+      });
       setStep("otp");
-    }, 1500);
+    }
   };
 
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) return;
-    
+
     setIsLoading(true);
-    // Simulate OTP verification - will be replaced with actual Supabase auth
-    setTimeout(() => {
-      setIsLoading(false);
-      // Navigate to home or profile setup
-    }, 1500);
+    const { error } = await verifyOtp(phone, otp);
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Invalid OTP",
+        description: "Please check the code and try again",
+        variant: "destructive",
+      });
+    }
+    // Auth context will handle the redirect after successful verification
   };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim()) return;
+
+    setIsLoading(true);
+    const { error } = await updateProfile({ full_name: fullName.trim() });
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    } else {
+      navigate("/");
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setIsLoading(true);
+    const { error } = await signInWithOtp(phone);
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "OTP Resent",
+        description: "A new code has been sent to your phone",
+      });
+      setOtp("");
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
@@ -100,7 +180,10 @@ export default function Auth() {
                 disabled={phone.length !== 10 || isLoading}
               >
                 {isLoading ? (
-                  "Sending OTP..."
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending OTP...
+                  </>
                 ) : (
                   <>
                     <Phone className="h-4 w-4" />
@@ -144,10 +227,9 @@ export default function Auth() {
                   Didn't receive code?{" "}
                   <button
                     type="button"
-                    className="font-medium text-primary hover:underline"
-                    onClick={() => {
-                      // Resend OTP logic
-                    }}
+                    className="font-medium text-primary hover:underline disabled:opacity-50"
+                    onClick={handleResendOTP}
+                    disabled={isLoading}
                   >
                     Resend
                   </button>
@@ -162,6 +244,7 @@ export default function Auth() {
                     setStep("phone");
                     setOtp("");
                   }}
+                  disabled={isLoading}
                 >
                   Change Number
                 </Button>
@@ -170,10 +253,48 @@ export default function Auth() {
                   disabled={otp.length !== 6 || isLoading}
                   onClick={handleVerifyOTP}
                 >
-                  {isLoading ? "Verifying..." : "Verify"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify"
+                  )}
                 </Button>
               </div>
             </div>
+          )}
+
+          {step === "profile" && (
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!fullName.trim() || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Complete Profile"
+                )}
+              </Button>
+            </form>
           )}
         </CardContent>
       </Card>
