@@ -1,78 +1,70 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Phone, ArrowLeft, Loader2 } from "lucide-react";
+import { Mail, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-type AuthStep = "phone" | "otp" | "profile";
+type AuthMode = "login" | "signup";
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, profile, signInWithOtp, verifyOtp, updateProfile, isLoading: authLoading } = useAuth();
-  const [step, setStep] = useState<AuthStep>("phone");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const { user, profile, signIn, signUp, updateProfile, isLoading: authLoading } = useAuth();
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user && profile) {
       if (!profile.full_name) {
-        setStep("profile");
+        setNeedsProfile(true);
       } else {
         navigate("/");
       }
     }
   }, [user, profile, navigate]);
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.length !== 10) return;
+    if (!email || !password) return;
 
     setIsLoading(true);
-    const { error } = await signInWithOtp(phone);
+    const { error } = await signIn(email, password);
     setIsLoading(false);
 
     if (error) {
       toast({
-        title: "Error sending OTP",
+        title: "Login failed",
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "OTP Sent",
-        description: `We've sent a verification code to +91 ${phone}`,
-      });
-      setStep("otp");
     }
   };
 
-  const handleVerifyOTP = async () => {
-    if (otp.length !== 6) return;
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    if (password.length < 6) {
+      toast({ title: "Password too short", description: "Must be at least 6 characters", variant: "destructive" });
+      return;
+    }
 
     setIsLoading(true);
-    const { error } = await verifyOtp(phone, otp);
+    const { error } = await signUp(email, password);
     setIsLoading(false);
 
     if (error) {
-      toast({
-        title: "Invalid OTP",
-        description: "Please check the code and try again",
-        variant: "destructive",
-      });
+      toast({ title: "Signup failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Check your email", description: "We've sent a verification link to confirm your account." });
     }
-    // Auth context will handle the redirect after successful verification
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -84,33 +76,9 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to update profile", variant: "destructive" });
     } else {
       navigate("/");
-    }
-  };
-
-  const handleResendOTP = async () => {
-    setIsLoading(true);
-    const { error } = await signInWithOtp(phone);
-    setIsLoading(false);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "OTP Resent",
-        description: "A new code has been sent to your phone",
-      });
-      setOtp("");
     }
   };
 
@@ -124,7 +92,6 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      {/* Back to Home */}
       <Link
         to="/"
         className="absolute left-4 top-4 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -133,7 +100,6 @@ export default function Auth() {
         Back to Home
       </Link>
 
-      {/* Logo */}
       <div className="mb-8 text-center">
         <h1 className="font-serif text-2xl font-bold text-primary">Gowtham Handlooms</h1>
         <p className="text-sm text-muted-foreground">Premium Andhra Handloom Sarees</p>
@@ -142,131 +108,19 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-serif text-2xl">
-            {step === "phone" && "Welcome"}
-            {step === "otp" && "Verify OTP"}
-            {step === "profile" && "Complete Profile"}
+            {needsProfile ? "Complete Profile" : mode === "login" ? "Welcome Back" : "Create Account"}
           </CardTitle>
           <CardDescription>
-            {step === "phone" && "Enter your phone number to continue"}
-            {step === "otp" && `We've sent a 6-digit code to +91 ${phone}`}
-            {step === "profile" && "Just a few more details"}
+            {needsProfile
+              ? "Just a few more details"
+              : mode === "login"
+              ? "Sign in to your account"
+              : "Sign up with your email"}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {step === "phone" && (
-            <form onSubmit={handleSendOTP} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <div className="flex gap-2">
-                  <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm">
-                    +91
-                  </div>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="9876543210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    className="flex-1"
-                    required
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full gap-2"
-                disabled={phone.length !== 10 || isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending OTP...
-                  </>
-                ) : (
-                  <>
-                    <Phone className="h-4 w-4" />
-                    Send OTP
-                  </>
-                )}
-              </Button>
-
-              <p className="text-center text-xs text-muted-foreground">
-                By continuing, you agree to our{" "}
-                <Link to="/terms" className="underline hover:text-foreground">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link to="/privacy" className="underline hover:text-foreground">
-                  Privacy Policy
-                </Link>
-              </p>
-            </form>
-          )}
-
-          {step === "otp" && (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center gap-4">
-                <InputOTP
-                  value={otp}
-                  onChange={setOtp}
-                  maxLength={6}
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Didn't receive code?{" "}
-                  <button
-                    type="button"
-                    className="font-medium text-primary hover:underline disabled:opacity-50"
-                    onClick={handleResendOTP}
-                    disabled={isLoading}
-                  >
-                    Resend
-                  </button>
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setStep("phone");
-                    setOtp("");
-                  }}
-                  disabled={isLoading}
-                >
-                  Change Number
-                </Button>
-                <Button
-                  className="flex-1"
-                  disabled={otp.length !== 6 || isLoading}
-                  onClick={handleVerifyOTP}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    "Verify"
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {step === "profile" && (
+          {needsProfile ? (
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
@@ -279,27 +133,68 @@ export default function Auth() {
                   required
                 />
               </div>
+              <Button type="submit" className="w-full" disabled={!fullName.trim() || isLoading}>
+                {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : "Complete Profile"}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={!fullName.trim() || isLoading}
-              >
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full gap-2" disabled={!email || !password || isLoading}>
                 {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> {mode === "login" ? "Signing in..." : "Creating account..."}</>
                 ) : (
-                  "Complete Profile"
+                  <><Mail className="h-4 w-4" /> {mode === "login" ? "Sign In" : "Sign Up"}</>
                 )}
               </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  type="button"
+                  className="font-medium text-primary hover:underline"
+                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                >
+                  {mode === "login" ? "Sign up" : "Sign in"}
+                </button>
+              </p>
             </form>
           )}
         </CardContent>
       </Card>
 
-      {/* Decorative elements */}
       <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-accent/5 blur-3xl" />
     </div>

@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 
 type UserRole = "admin" | "owner" | "customer";
 
@@ -23,8 +22,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isOwner: boolean;
   isCustomer: boolean;
-  signInWithOtp: (phone: string) => Promise<{ error: Error | null }>;
-  verifyOtp: (phone: string, token: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
@@ -80,13 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer Supabase calls with setTimeout
         if (session?.user) {
           setTimeout(() => {
             fetchProfile(session.user.id);
@@ -100,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -114,10 +110,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithOtp = async (phone: string) => {
+  const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: `+91${phone}`,
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
       });
       return { error: error as Error | null };
     } catch (error) {
@@ -125,12 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const verifyOtp = async (phone: string, token: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: `+91${phone}`,
-        token,
-        type: "sms",
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
       return { error: error as Error | null };
     } catch (error) {
@@ -176,8 +175,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         isOwner,
         isCustomer,
-        signInWithOtp,
-        verifyOtp,
+        signUp,
+        signIn,
         signOut,
         updateProfile,
         refreshProfile,
