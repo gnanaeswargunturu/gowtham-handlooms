@@ -1,25 +1,25 @@
-import { Truck, Shield, RefreshCw, Headphones } from "lucide-react";
+import { Truck, Shield, RefreshCw, MessageCircle } from "lucide-react";
 
 const badges = [
   {
     icon: Truck,
     title: "Free Shipping",
-    description: "On orders above ₹5,000",
+    description: "Free shipping on orders above ₹5,000",
   },
   {
     icon: Shield,
     title: "Authentic Handloom",
-    description: "100% genuine products",
+    description: "100% handloom, sourced directly from weavers",
   },
   {
     icon: RefreshCw,
     title: "Easy Returns",
-    description: "7-day return policy",
+    description: "7-day hassle-free returns",
   },
   {
-    icon: Headphones,
-    title: "Support",
-    description: "WhatsApp assistance",
+    icon: MessageCircle,
+    title: "WhatsApp Support",
+    description: "WhatsApp & phone support for every order",
   },
 ];
 
@@ -39,7 +39,7 @@ export function TrustBadges() {
               </div>
               <div>
                 <h4 className="font-medium text-foreground">{badge.title}</h4>
-                <p className="text-sm text-muted-foreground">{badge.description}</p>
+                <p className="text-xs text-muted-foreground">{badge.description}</p>
               </div>
             </div>
           ))}

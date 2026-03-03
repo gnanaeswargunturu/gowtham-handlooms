@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import heroImage from "@/assets/hero-saree.jpg";
 
 export function HeroBanner() {
   return (
@@ -16,42 +17,50 @@ export function HeroBanner() {
             <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Handwoven with{" "}
               <span className="text-primary">Love & Tradition</span>
+              {" "}from Andhra Pradesh
             </h1>
             
             <p className="mx-auto max-w-lg text-lg text-muted-foreground lg:mx-0">
-              Discover exquisite Andhra handloom sarees crafted by skilled artisans. 
-              Each piece is a masterwork of heritage, elegance, and timeless beauty.
+              Discover authentic handloom sarees crafted by master weavers from Chirala and surrounding regions. Each piece is a masterwork of heritage, elegance, and timeless beauty.
             </p>
             
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
               <Button size="lg" className="btn-premium gap-2" asChild>
                 <Link to="/shop">
-                  Explore Collection
+                  Shop Sarees
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/about">Our Story</Link>
+                <Link to="/about">Explore Our Story</Link>
               </Button>
             </div>
           </div>
 
-          {/* Hero Image Placeholder */}
-          <div className="relative aspect-[4/5] lg:aspect-square">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/10 to-primary/5">
-              {/* Decorative elements */}
-              <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-primary/20" />
-              <div className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/30" />
-              
-              {/* Placeholder content */}
-              <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
-                <div className="h-32 w-32 rounded-full bg-primary/10 backdrop-blur" />
-                <p className="font-serif text-lg text-muted-foreground">
-                  Premium Saree Collection
-                </p>
-                <p className="text-sm text-muted-foreground/70">
-                  Images will be added soon
-                </p>
+          {/* Hero Image */}
+          <div className="relative aspect-[3/4] lg:aspect-[4/5]">
+            <div className="absolute inset-0 overflow-hidden rounded-2xl shadow-premium-lg">
+              <img
+                src={heroImage}
+                alt="Premium Andhra handloom silk saree in maroon and gold – Gowtham Handlooms collection"
+                className="h-full w-full object-cover"
+                loading="eager"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
+            </div>
+            
+            {/* Floating badge */}
+            <div className="absolute -left-4 bottom-8 hidden rounded-xl bg-card p-4 shadow-premium-lg lg:block">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="font-serif text-2xl font-bold text-primary">25+</p>
+                  <p className="text-xs text-muted-foreground">Years of Trust</p>
+                </div>
+                <div className="h-10 w-px bg-border" />
+                <div className="text-center">
+                  <p className="font-serif text-2xl font-bold text-primary">1000+</p>
+                  <p className="text-xs text-muted-foreground">Happy Customers</p>
+                </div>
               </div>
             </div>
           </div>
