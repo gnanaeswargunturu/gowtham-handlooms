@@ -1,40 +1,21 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import heritageImage from "@/assets/heritage-weaver.jpg";
 
 export function HeritageSection() {
   return (
     <section className="py-16 lg:py-24">
       <div className="container">
         <div className="grid items-center gap-12 lg:grid-cols-2">
-          {/* Image/Visual */}
+          {/* Image */}
           <div className="relative order-2 lg:order-1">
-            <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5">
-              {/* Decorative pattern */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="grid grid-cols-3 gap-4 p-8">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-16 w-16 rounded-lg bg-primary/5 backdrop-blur"
-                      style={{
-                        animationDelay: `${i * 100}ms`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-              
-              {/* Overlay text */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="font-serif text-2xl font-semibold text-primary/60">
-                    Heritage Image
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Coming Soon
-                  </p>
-                </div>
-              </div>
+            <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-premium-lg">
+              <img
+                src={heritageImage}
+                alt="Master weaver working on traditional handloom in Chirala, Andhra Pradesh"
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
             </div>
 
             {/* Floating stats card */}
@@ -75,6 +56,10 @@ export function HeritageSection() {
                 Each saree in our collection is a testament to the skill, patience, and artistry 
                 of our weavers. From the intricate zari work of Kuppadam to the geometric brilliance 
                 of Pochampally Ikat, every piece tells a story of tradition meeting elegance.
+              </p>
+              <p>
+                We source directly from artisan families, ensuring fair wages and authentic craftsmanship. 
+                No powerloom, no shortcuts – just pure handloom tradition passed down through generations.
               </p>
             </div>
 

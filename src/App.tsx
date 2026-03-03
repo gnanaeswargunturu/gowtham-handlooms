@@ -9,6 +9,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import About from "./pages/About";
+import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
+import ShippingPolicy from "./pages/ShippingPolicy";
+import ReturnsPolicy from "./pages/ReturnsPolicy";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
@@ -40,6 +46,12 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/shipping" element={<ShippingPolicy />} />
+            <Route path="/returns" element={<ReturnsPolicy />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/cart" element={<Cart />} />

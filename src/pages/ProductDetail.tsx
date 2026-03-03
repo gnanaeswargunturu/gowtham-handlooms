@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, Minus, Plus, ChevronLeft, ChevronRight, Loader2, Check } from "lucide-react";
+import { Heart, ShoppingCart, Minus, Plus, ChevronLeft, ChevronRight, Loader2, Check, MessageCircle, Shield, Truck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,9 +36,7 @@ export default function ProductDetail() {
       <CustomerLayout>
         <div className="container flex flex-col items-center justify-center py-16">
           <h2 className="font-serif text-2xl font-bold">Product not found</h2>
-          <Button className="mt-4" onClick={() => navigate("/shop")}>
-            Back to Shop
-          </Button>
+          <Button className="mt-4" onClick={() => navigate("/shop")}>Back to Shop</Button>
         </div>
       </CustomerLayout>
     );
@@ -57,35 +55,22 @@ export default function ProductDetail() {
     setIsAddingToCart(false);
   };
 
-  const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  const whatsappMessage = encodeURIComponent(
+    `Hi, I'm interested in "${product.name}" (₹${Number(product.price).toLocaleString()}). Can you share more details?\n\nProduct link: ${window.location.href}`
+  );
 
   return (
     <CustomerLayout>
       <div className="container py-8">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <button onClick={() => navigate("/")} className="hover:text-foreground">
-            Home
-          </button>
+          <button onClick={() => navigate("/")} className="hover:text-foreground">Home</button>
           <span>/</span>
-          <button onClick={() => navigate("/shop")} className="hover:text-foreground">
-            Shop
-          </button>
+          <button onClick={() => navigate("/shop")} className="hover:text-foreground">Shop</button>
           {product.category && (
             <>
               <span>/</span>
-              <button
-                onClick={() => navigate(`/shop?category=${product.category?.slug}`)}
-                className="hover:text-foreground"
-              >
-                {product.category.name}
-              </button>
+              <button onClick={() => navigate(`/shop?category=${product.category?.slug}`)} className="hover:text-foreground">{product.category.name}</button>
             </>
           )}
           <span>/</span>
@@ -97,64 +82,27 @@ export default function ProductDetail() {
           <div className="space-y-4">
             <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted">
               {images.length > 0 ? (
-                <img
-                  src={images[selectedImageIndex].image_url}
-                  alt={images[selectedImageIndex].alt_text || product.name}
-                  className="h-full w-full object-cover"
-                />
+                <img src={images[selectedImageIndex].image_url} alt={images[selectedImageIndex].alt_text || product.name} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  No Image Available
-                </div>
+                <div className="flex h-full items-center justify-center text-muted-foreground">No Image Available</div>
               )}
-
               {images.length > 1 && (
                 <>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2"
-                    onClick={prevImage}
-                  >
+                  <Button variant="secondary" size="icon" className="absolute left-2 top-1/2 -translate-y-1/2" onClick={() => setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length)}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={nextImage}
-                  >
+                  <Button variant="secondary" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setSelectedImageIndex((prev) => (prev + 1) % images.length)}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </>
               )}
-
-              {discount > 0 && (
-                <Badge className="absolute left-4 top-4 bg-accent text-accent-foreground">
-                  {discount}% OFF
-                </Badge>
-              )}
+              {discount > 0 && <Badge className="absolute left-4 top-4 bg-accent text-accent-foreground">{discount}% OFF</Badge>}
             </div>
-
-            {/* Thumbnail Gallery */}
             {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {images.map((image, index) => (
-                  <button
-                    key={image.id}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={cn(
-                      "h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border-2 transition-colors",
-                      selectedImageIndex === index
-                        ? "border-primary"
-                        : "border-transparent hover:border-muted-foreground/50"
-                    )}
-                  >
-                    <img
-                      src={image.image_url}
-                      alt={image.alt_text || `${product.name} ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+                  <button key={image.id} onClick={() => setSelectedImageIndex(index)} className={cn("h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border-2 transition-colors", selectedImageIndex === index ? "border-primary" : "border-transparent hover:border-muted-foreground/50")}>
+                    <img src={image.image_url} alt={image.alt_text || `${product.name} ${index + 1}`} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -163,22 +111,14 @@ export default function ProductDetail() {
 
           {/* Product Info */}
           <div className="space-y-6">
-            {product.category && (
-              <Badge variant="secondary">{product.category.name}</Badge>
-            )}
-
+            {product.category && <Badge variant="secondary">{product.category.name}</Badge>}
             <h1 className="font-serif text-3xl font-bold">{product.name}</h1>
+            {product.description && <p className="text-muted-foreground">{product.description}</p>}
 
             {/* Price */}
             <div className="flex items-center gap-3">
-              <span className="text-3xl font-bold text-primary">
-                ₹{Number(product.price).toLocaleString()}
-              </span>
-              {product.compare_at_price && (
-                <span className="text-xl text-muted-foreground line-through">
-                  ₹{Number(product.compare_at_price).toLocaleString()}
-                </span>
-              )}
+              <span className="text-3xl font-bold text-primary">₹{Number(product.price).toLocaleString()}</span>
+              {product.compare_at_price && <span className="text-xl text-muted-foreground line-through">₹{Number(product.compare_at_price).toLocaleString()}</span>}
             </div>
 
             {/* Stock Status */}
@@ -186,14 +126,10 @@ export default function ProductDetail() {
               {product.stock_quantity > 0 ? (
                 <>
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-green-600">
-                    {product.stock_quantity <= product.low_stock_threshold
-                      ? `Only ${product.stock_quantity} left!`
-                      : "In Stock"}
-                  </span>
+                  <span className="text-green-600">{product.stock_quantity <= product.low_stock_threshold ? `Only ${product.stock_quantity} left!` : "In Stock"}</span>
                 </>
               ) : (
-                <span className="text-red-600">Out of Stock</span>
+                <span className="text-destructive">Out of Stock</span>
               )}
             </div>
 
@@ -203,90 +139,44 @@ export default function ProductDetail() {
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium">Quantity:</span>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}><Minus className="h-4 w-4" /></Button>
                     <span className="w-12 text-center font-medium">{quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
-                      disabled={quantity >= product.stock_quantity}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))} disabled={quantity >= product.stock_quantity}><Plus className="h-4 w-4" /></Button>
                   </div>
                 </div>
-
                 <div className="flex gap-3">
-                  <Button
-                    className="flex-1"
-                    size="lg"
-                    onClick={handleAddToCart}
-                    disabled={isAddingToCart}
-                  >
-                    {isAddingToCart ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                    )}
+                  <Button className="flex-1" size="lg" onClick={handleAddToCart} disabled={isAddingToCart}>
+                    {isAddingToCart ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
                     {inCart ? "Add More to Cart" : "Add to Cart"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => toggleWishlist(product.id)}
-                  >
-                    <Heart
-                      className={cn(
-                        "h-4 w-4",
-                        inWishlist && "fill-current text-red-500"
-                      )}
-                    />
+                  <Button variant="outline" size="lg" onClick={() => toggleWishlist(product.id)}>
+                    <Heart className={cn("h-4 w-4", inWishlist && "fill-current text-red-500")} />
                   </Button>
                 </div>
+                {/* WhatsApp Buy */}
+                <Button variant="outline" size="lg" className="w-full gap-2" asChild>
+                  <a href={`https://wa.me/919876543210?text=${whatsappMessage}`} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-4 w-4" />
+                    Buy on WhatsApp
+                  </a>
+                </Button>
               </div>
             )}
 
             {/* Quick Info */}
             <div className="grid grid-cols-2 gap-4 rounded-lg border p-4">
-              {product.fabric_type && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Fabric</span>
-                  <p className="font-medium">{product.fabric_type}</p>
-                </div>
-              )}
-              {product.color && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Color</span>
-                  <p className="font-medium">{product.color}</p>
-                </div>
-              )}
-              {product.length_meters && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Saree Length</span>
-                  <p className="font-medium">{product.length_meters} meters</p>
-                </div>
-              )}
-              {product.has_blouse_piece && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Blouse Piece</span>
-                  <p className="font-medium">
-                    Yes{product.blouse_length_meters ? ` (${product.blouse_length_meters}m)` : ""}
-                  </p>
-                </div>
-              )}
-              {product.occasion && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Occasion</span>
-                  <p className="font-medium">{product.occasion}</p>
-                </div>
-              )}
+              {product.fabric_type && <div><span className="text-sm text-muted-foreground">Fabric</span><p className="font-medium">{product.fabric_type}</p></div>}
+              {product.color && <div><span className="text-sm text-muted-foreground">Color</span><p className="font-medium">{product.color}</p></div>}
+              {product.length_meters && <div><span className="text-sm text-muted-foreground">Saree Length</span><p className="font-medium">{product.length_meters} meters</p></div>}
+              {product.has_blouse_piece && <div><span className="text-sm text-muted-foreground">Blouse Piece</span><p className="font-medium">Yes{product.blouse_length_meters ? ` (${product.blouse_length_meters}m)` : ""}</p></div>}
+              {product.occasion && <div><span className="text-sm text-muted-foreground">Occasion</span><p className="font-medium capitalize">{product.occasion}</p></div>}
+            </div>
+
+            {/* Trust Icons */}
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-primary" /><span>Authentic Handloom</span></div>
+              <div className="flex items-center gap-1.5"><Truck className="h-4 w-4 text-primary" /><span>5–7 days delivery</span></div>
+              <div className="flex items-center gap-1.5"><RefreshCw className="h-4 w-4 text-primary" /><span>7-day returns</span></div>
             </div>
 
             {/* Tabs */}
@@ -296,14 +186,10 @@ export default function ProductDetail() {
                 <TabsTrigger value="care" className="flex-1">Wash Care</TabsTrigger>
               </TabsList>
               <TabsContent value="description" className="mt-4">
-                <p className="text-muted-foreground whitespace-pre-line">
-                  {product.description || "No description available."}
-                </p>
+                <p className="text-muted-foreground whitespace-pre-line">{product.description || "No description available."}</p>
               </TabsContent>
               <TabsContent value="care" className="mt-4">
-                <p className="text-muted-foreground whitespace-pre-line">
-                  {product.wash_care || "Dry clean recommended. Store in a cool, dry place."}
-                </p>
+                <p className="text-muted-foreground whitespace-pre-line">{product.wash_care || "Dry clean recommended. Store in a cool, dry place."}</p>
               </TabsContent>
             </Tabs>
           </div>

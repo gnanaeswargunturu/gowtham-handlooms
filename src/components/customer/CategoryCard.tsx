@@ -5,9 +5,12 @@ import { cn } from "@/lib/utils";
 interface CategoryCardProps {
   category: Category;
   className?: string;
+  fallbackImage?: string;
 }
 
-export function CategoryCard({ category, className }: CategoryCardProps) {
+export function CategoryCard({ category, className, fallbackImage }: CategoryCardProps) {
+  const imageUrl = category.image_url || fallbackImage;
+
   return (
     <Link
       to={`/shop?category=${category.slug}`}
@@ -16,18 +19,17 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
         className
       )}
     >
-      {/* Background image or placeholder */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10">
-        {category.image_url ? (
+      {/* Background image */}
+      <div className="absolute inset-0">
+        {imageUrl ? (
           <img
-            src={category.image_url}
-            alt={category.name}
+            src={imageUrl}
+            alt={`${category.name} handloom saree collection – Gowtham Handlooms`}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-24 w-24 rounded-full bg-primary/10" />
-          </div>
+          <div className="h-full w-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10" />
         )}
       </div>
 
@@ -50,7 +52,6 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
   );
 }
 
-// Skeleton loader for category card
 export function CategoryCardSkeleton() {
   return (
     <div className="aspect-[3/4] animate-pulse rounded-xl bg-muted">
