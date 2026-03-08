@@ -153,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setIsRoleLoading(false);
   };
 
   const updateProfile = async (data: Partial<Profile>) => {
