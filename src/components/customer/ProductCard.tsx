@@ -2,34 +2,54 @@ import { Link } from "react-router-dom";
 import { Heart, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Product, ProductImage } from "@/types";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface ProductCardProps {
-  product: Product & { images?: ProductImage[] };
-  className?: string;
+interface ProductCardProduct {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  fabric_type?: string | null;
+  occasion?: string | null;
+  color?: string | null;
+  price: number;
+  compare_at_price?: number | null;
+  stock_quantity: number;
+  low_stock_threshold?: number;
+  is_featured?: boolean;
+  is_active?: boolean;
+  has_blouse_piece?: boolean | null;
+  category?: { id: string; name: string; slug: string } | null;
+  images?: { id: string; image_url: string; alt_text?: string | null; sort_order: number }[];
 }
 
-export function ProductCard({ product, className }: ProductCardProps) {
-  const primaryImage = product.images?.find((img) => img.is_primary) || product.images?.[0];
-  const hasDiscount = product.discount_percentage > 0;
+interface ProductCardProps {
+  product: ProductCardProduct;
+  className?: string;
+  badge?: string;
+}
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+export function ProductCard({ product, className, badge }: ProductCardProps) {
+  const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { user } = useAuth();
+
+  const primaryImage = product.images?.[0];
+  const price = Number(product.price);
+  const comparePrice = product.compare_at_price ? Number(product.compare_at_price) : null;
+  const discount = comparePrice ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0;
+  const lowStock = (product.low_stock_threshold || 5);
+  const inWishlist = user ? isInWishlist(product.id) : false;
+
+  const formatPrice = (p: number) =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(p);
 
   return (
-    <div
-      className={cn(
-        "group relative rounded-xl bg-card transition-all duration-300 hover-lift",
-        className
-      )}
-    >
-      {/* Image Container */}
+    <div className={cn("group relative rounded-xl bg-card transition-all duration-300 hover-lift", className)}>
+      {/* Image */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl bg-muted">
         <Link to={`/product/${product.slug}`}>
           {primaryImage?.image_url ? (
@@ -37,6 +57,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               src={primaryImage.image_url}
               alt={primaryImage.alt_text || product.name}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
@@ -50,18 +71,17 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
         {/* Badges */}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
-          {hasDiscount && (
-            <Badge className="bg-destructive text-destructive-foreground">
-              {product.discount_percentage}% OFF
-            </Badge>
+          {discount > 0 && (
+            <Badge className="bg-destructive text-destructive-foreground">{discount}% OFF</Badge>
           )}
-          {product.is_featured && (
+          {badge && (
+            <Badge className="bg-accent text-accent-foreground">{badge}</Badge>
+          )}
+          {product.is_featured && !badge && (
             <Badge className="bg-accent text-accent-foreground">Featured</Badge>
           )}
-          {product.stock_quantity <= product.low_stock_threshold && product.stock_quantity > 0 && (
-            <Badge variant="outline" className="bg-background/80">
-              Only {product.stock_quantity} left
-            </Badge>
+          {product.stock_quantity <= lowStock && product.stock_quantity > 0 && (
+            <Badge variant="outline" className="bg-background/80">Only {product.stock_quantity} left</Badge>
           )}
           {product.stock_quantity === 0 && (
             <Badge variant="secondary">Out of Stock</Badge>
@@ -73,24 +93,33 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 rounded-full bg-background/90 backdrop-blur"
+            className={cn(
+              "h-8 w-8 rounded-full bg-background/90 backdrop-blur",
+              inWishlist && "text-red-500"
+            )}
+            onClick={(e) => {
+              e.preventDefault();
+              toggleWishlist(product.id);
+            }}
           >
-            <Heart className="h-4 w-4" />
-            <span className="sr-only">Add to wishlist</span>
+            <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
           </Button>
           <Button
             size="icon"
             variant="secondary"
             className="h-8 w-8 rounded-full bg-background/90 backdrop-blur"
             disabled={product.stock_quantity === 0}
+            onClick={(e) => {
+              e.preventDefault();
+              addToCart(product.id);
+            }}
           >
             <ShoppingBag className="h-4 w-4" />
-            <span className="sr-only">Add to cart</span>
           </Button>
         </div>
       </div>
 
-      {/* Product Info */}
+      {/* Info */}
       <div className="p-4">
         <Link to={`/product/${product.slug}`}>
           <h3 className="font-serif text-lg font-medium text-foreground transition-colors hover:text-primary">
@@ -99,33 +128,26 @@ export function ProductCard({ product, className }: ProductCardProps) {
         </Link>
 
         <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="capitalize">{product.fabric_type}</span>
-          <span>•</span>
-          <span className="capitalize">{product.occasion}</span>
+          {product.fabric_type && <span className="capitalize">{product.fabric_type}</span>}
+          {product.fabric_type && product.occasion && <span>•</span>}
+          {product.occasion && <span className="capitalize">{product.occasion}</span>}
         </div>
 
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="font-serif text-xl font-bold text-primary">
-            {formatPrice(product.final_price)}
-          </span>
-          {hasDiscount && (
-            <span className="text-sm text-muted-foreground line-through">
-              {formatPrice(product.original_price)}
-            </span>
+          <span className="font-serif text-xl font-bold text-primary">{formatPrice(price)}</span>
+          {comparePrice && discount > 0 && (
+            <span className="text-sm text-muted-foreground line-through">{formatPrice(comparePrice)}</span>
           )}
         </div>
 
         {product.has_blouse_piece && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            ✓ Blouse piece included
-          </p>
+          <p className="mt-2 text-xs text-muted-foreground">✓ Blouse piece included</p>
         )}
       </div>
     </div>
   );
 }
 
-// Skeleton loader for product card
 export function ProductCardSkeleton() {
   return (
     <div className="rounded-xl bg-card">

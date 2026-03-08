@@ -395,6 +395,60 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          is_verified: boolean
+          order_id: string | null
+          product_id: string
+          rating: number
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          order_id?: string | null
+          product_id: string
+          rating: number
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          order_id?: string | null
+          product_id?: string
+          rating?: number
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_settings: {
         Row: {
           address: string | null
@@ -407,6 +461,7 @@ export type Database = {
           id: string
           logo_url: string | null
           min_order_amount: number | null
+          payment_qr_url: string | null
           phone: string | null
           return_policy: string | null
           shipping_policy: string | null
@@ -427,6 +482,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           min_order_amount?: number | null
+          payment_qr_url?: string | null
           phone?: string | null
           return_policy?: string | null
           shipping_policy?: string | null
@@ -447,6 +503,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           min_order_amount?: number | null
+          payment_qr_url?: string | null
           phone?: string | null
           return_policy?: string | null
           shipping_policy?: string | null

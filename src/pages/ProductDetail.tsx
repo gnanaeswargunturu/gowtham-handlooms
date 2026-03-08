@@ -1,25 +1,45 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, Minus, Plus, ChevronLeft, ChevronRight, Loader2, Check, MessageCircle, Shield, Truck, RefreshCw } from "lucide-react";
+import { Heart, ShoppingCart, Minus, Plus, ChevronLeft, ChevronRight, Loader2, Check, MessageCircle, Shield, Truck, RefreshCw, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/layout/CustomerLayout";
-import { useProduct } from "@/hooks/useProducts";
+import { useProduct, useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useReviews, useCreateReview } from "@/hooks/useReviews";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProductCard } from "@/components/customer/ProductCard";
 import { cn } from "@/lib/utils";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { product, isLoading, error } = useProduct(slug || "");
   const { addToCart, items: cartItems } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
-  
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  // Reviews
+  const { reviews, averageRating, refetch: refetchReviews } = useReviews(product?.id || "");
+  const { createReview, isLoading: reviewLoading } = useCreateReview();
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+
+  // Similar products
+  const { products: similarProducts } = useProducts({
+    categorySlug: product?.category?.slug,
+    limit: 4,
+  });
 
   if (isLoading) {
     return (
@@ -44,7 +64,7 @@ export default function ProductDetail() {
 
   const images = product.images?.length ? product.images.sort((a, b) => a.sort_order - b.sort_order) : [];
   const inCart = cartItems.some((item) => item.product_id === product.id);
-  const inWishlist = isInWishlist(product.id);
+  const inWishlist = user ? isInWishlist(product.id) : false;
   const discount = product.compare_at_price
     ? Math.round(((Number(product.compare_at_price) - Number(product.price)) / Number(product.compare_at_price)) * 100)
     : 0;
@@ -55,9 +75,26 @@ export default function ProductDetail() {
     setIsAddingToCart(false);
   };
 
+  const handleSubmitReview = async () => {
+    const { error } = await createReview({
+      product_id: product.id,
+      rating: reviewRating,
+      title: reviewTitle,
+      comment: reviewComment,
+    });
+    if (!error) {
+      setReviewTitle("");
+      setReviewComment("");
+      setReviewRating(5);
+      refetchReviews();
+    }
+  };
+
   const whatsappMessage = encodeURIComponent(
     `Hi, I'm interested in "${product.name}" (₹${Number(product.price).toLocaleString()}). Can you share more details?\n\nProduct link: ${window.location.href}`
   );
+
+  const filteredSimilar = similarProducts.filter((p) => p.id !== product.id).slice(0, 4);
 
   return (
     <CustomerLayout>
@@ -115,13 +152,25 @@ export default function ProductDetail() {
             <h1 className="font-serif text-3xl font-bold">{product.name}</h1>
             {product.description && <p className="text-muted-foreground">{product.description}</p>}
 
+            {/* Rating */}
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} className={cn("h-4 w-4", s <= Math.round(averageRating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                  ))}
+                </div>
+                <span className="text-sm text-muted-foreground">({reviews.length} review{reviews.length !== 1 ? "s" : ""})</span>
+              </div>
+            )}
+
             {/* Price */}
             <div className="flex items-center gap-3">
               <span className="text-3xl font-bold text-primary">₹{Number(product.price).toLocaleString()}</span>
               {product.compare_at_price && <span className="text-xl text-muted-foreground line-through">₹{Number(product.compare_at_price).toLocaleString()}</span>}
             </div>
 
-            {/* Stock Status */}
+            {/* Stock */}
             <div className="flex items-center gap-2">
               {product.stock_quantity > 0 ? (
                 <>
@@ -153,11 +202,9 @@ export default function ProductDetail() {
                     <Heart className={cn("h-4 w-4", inWishlist && "fill-current text-red-500")} />
                   </Button>
                 </div>
-                {/* WhatsApp Buy */}
                 <Button variant="outline" size="lg" className="w-full gap-2" asChild>
                   <a href={`https://wa.me/919876543210?text=${whatsappMessage}`} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="h-4 w-4" />
-                    Buy on WhatsApp
+                    <MessageCircle className="h-4 w-4" />Buy on WhatsApp
                   </a>
                 </Button>
               </div>
@@ -184,6 +231,7 @@ export default function ProductDetail() {
               <TabsList className="w-full">
                 <TabsTrigger value="description" className="flex-1">Description</TabsTrigger>
                 <TabsTrigger value="care" className="flex-1">Wash Care</TabsTrigger>
+                <TabsTrigger value="reviews" className="flex-1">Reviews ({reviews.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="description" className="mt-4">
                 <p className="text-muted-foreground whitespace-pre-line">{product.description || "No description available."}</p>
@@ -191,9 +239,70 @@ export default function ProductDetail() {
               <TabsContent value="care" className="mt-4">
                 <p className="text-muted-foreground whitespace-pre-line">{product.wash_care || "Dry clean recommended. Store in a cool, dry place."}</p>
               </TabsContent>
+              <TabsContent value="reviews" className="mt-4 space-y-6">
+                {/* Write Review */}
+                {user && (
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <h4 className="font-medium">Write a Review</h4>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button key={s} onClick={() => setReviewRating(s)}>
+                          <Star className={cn("h-5 w-5 transition-colors", s <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground hover:text-yellow-300")} />
+                        </button>
+                      ))}
+                    </div>
+                    <Input placeholder="Review title (optional)" value={reviewTitle} onChange={(e) => setReviewTitle(e.target.value)} />
+                    <Textarea placeholder="Share your experience..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} />
+                    <Button onClick={handleSubmitReview} disabled={reviewLoading} size="sm">
+                      {reviewLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Submit Review
+                    </Button>
+                  </div>
+                )}
+
+                {/* Reviews List */}
+                {reviews.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No reviews yet. Be the first to review!</p>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="rounded-lg border p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star key={s} className={cn("h-3.5 w-3.5", s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                              ))}
+                            </div>
+                            {review.is_verified && <Badge variant="secondary" className="text-xs">Verified Purchase</Badge>}
+                          </div>
+                          <span className="text-xs text-muted-foreground">{new Date(review.created_at).toLocaleDateString("en-IN")}</span>
+                        </div>
+                        {review.title && <p className="mt-2 font-medium">{review.title}</p>}
+                        {review.comment && <p className="mt-1 text-sm text-muted-foreground">{review.comment}</p>}
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {(review as any).profile?.full_name || "Customer"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
             </Tabs>
           </div>
         </div>
+
+        {/* Similar Products */}
+        {filteredSimilar.length > 0 && (
+          <div className="mt-16">
+            <h2 className="mb-6 font-serif text-2xl font-bold">You May Also Like</h2>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {filteredSimilar.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </CustomerLayout>
   );
