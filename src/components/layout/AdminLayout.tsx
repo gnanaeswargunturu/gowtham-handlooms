@@ -25,7 +25,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, isAdmin, isLoading, isRoleLoading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  if (isLoading) {
+  if (isLoading || isRoleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <span className="text-sm text-muted-foreground">Loading admin access...</span>
