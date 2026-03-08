@@ -265,6 +265,70 @@ export default function Checkout() {
               </CardContent>
             </Card>
 
+            {/* Payment Method */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                  className="space-y-3"
+                >
+                  <div
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                      paymentMethod === "cod"
+                        ? "border-primary bg-primary/5"
+                        : "hover:border-muted-foreground/50"
+                    }`}
+                    onClick={() => setPaymentMethod("cod")}
+                  >
+                    <RadioGroupItem value="cod" id="cod" className="mt-1" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Cash on Delivery</span>
+                        <Badge variant="secondary" className="text-xs">Available</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Pay when your order is delivered
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-not-allowed opacity-60`}
+                  >
+                    <RadioGroupItem value="upi" id="upi" className="mt-1" disabled />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">UPI Payment</span>
+                        <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Pay via Google Pay, PhonePe, Paytm, etc.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`flex items-start gap-3 rounded-lg border p-4 cursor-not-allowed opacity-60`}
+                  >
+                    <RadioGroupItem value="bank" id="bank" className="mt-1" disabled />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Bank Transfer</span>
+                        <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Direct bank transfer / NEFT / IMPS
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
             {/* Order Notes */}
             <Card>
               <CardHeader>
