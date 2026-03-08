@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { 
   LayoutDashboard, Users, ShoppingCart, LogOut, Store, Menu, X, Shield, Package, Settings
 } from "lucide-react";
@@ -22,11 +22,19 @@ const navItems = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isLoading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  if (!user) { navigate("/auth"); return null; }
-  if (!isAdmin) { navigate("/"); return null; }
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <span className="text-sm text-muted-foreground">Loading admin access...</span>
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 
