@@ -19,6 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: UserRole[];
   isLoading: boolean;
+  isRoleLoading: boolean;
   isAdmin: boolean;
   isOwner: boolean;
   isCustomer: boolean;
