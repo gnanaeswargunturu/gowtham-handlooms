@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchRoles = async (userId: string) => {
+    setIsRoleLoading(true);
     try {
       const { data, error } = await supabase
         .from("user_roles")
@@ -70,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles((data || []).map((r) => r.role as UserRole));
     } catch (error) {
       console.error("Error fetching roles:", error);
+      setRoles([]);
+    } finally {
+      setIsRoleLoading(false);
     }
   };
 
