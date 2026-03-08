@@ -19,6 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: UserRole[];
   isLoading: boolean;
+  isRoleLoading: boolean;
   isAdmin: boolean;
   isOwner: boolean;
   isCustomer: boolean;
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRoleLoading, setIsRoleLoading] = useState(true);
 
   const isAdmin = roles.includes("admin");
   const isOwner = roles.includes("owner");
@@ -58,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchRoles = async (userId: string) => {
+    setIsRoleLoading(true);
     try {
       const { data, error } = await supabase
         .from("user_roles")
@@ -68,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles((data || []).map((r) => r.role as UserRole));
     } catch (error) {
       console.error("Error fetching roles:", error);
+      setRoles([]);
+    } finally {
+      setIsRoleLoading(false);
     }
   };
 
@@ -85,24 +91,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-            fetchRoles(session.user.id);
+          setTimeout(async () => {
+            await fetchProfile(session.user.id);
+            await fetchRoles(session.user.id);
+            setIsLoading(false);
           }, 0);
         } else {
           setProfile(null);
           setRoles([]);
+          setIsRoleLoading(false);
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchRoles(session.user.id);
+        await fetchProfile(session.user.id);
+        await fetchRoles(session.user.id);
+      } else {
+        setIsRoleLoading(false);
       }
       setIsLoading(false);
     });
@@ -143,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setIsRoleLoading(false);
   };
 
   const updateProfile = async (data: Partial<Profile>) => {
@@ -172,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         roles,
         isLoading,
+        isRoleLoading,
         isAdmin,
         isOwner,
         isCustomer,
