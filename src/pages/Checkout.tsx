@@ -418,7 +418,7 @@ export default function Checkout() {
               </Button>
 
               <p className="mt-4 text-xs text-center text-muted-foreground">
-                Payment will be collected on delivery
+                Payment method: Cash on Delivery
               </p>
             </div>
           </div>
