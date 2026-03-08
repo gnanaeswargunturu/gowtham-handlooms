@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { MapPin, Plus, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
