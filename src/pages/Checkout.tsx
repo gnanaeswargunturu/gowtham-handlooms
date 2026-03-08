@@ -18,7 +18,7 @@ import { useCreateOrder } from "@/hooks/useOrders";
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, isLoading: cartLoading } = useCart();
   const { addresses, addAddress, isLoading: addressLoading } = useAddresses();
   const { createOrder, isLoading: orderLoading } = useCreateOrder();
 
@@ -45,6 +45,16 @@ export default function Checkout() {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (cartLoading) {
+    return (
+      <CustomerLayout>
+        <div className="container py-12 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      </CustomerLayout>
+    );
   }
 
   if (items.length === 0) {
