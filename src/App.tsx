@@ -16,6 +16,7 @@ import ReturnsPolicy from "./pages/ReturnsPolicy";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
