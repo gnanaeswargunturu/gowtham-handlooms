@@ -28,6 +28,7 @@ export default function Checkout() {
   const [notes, setNotes] = useState("");
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   // Address form state
   const [addressForm, setAddressForm] = useState({
