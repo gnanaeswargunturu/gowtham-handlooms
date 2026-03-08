@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { 
   LayoutDashboard, Users, ShoppingCart, LogOut, Store, Menu, X, Shield, Package, Settings
 } from "lucide-react";
