@@ -21,11 +21,12 @@ interface CartItem {
 export function useCart() {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchCart = useCallback(async () => {
     if (!user) {
       setItems([]);
+      setIsLoading(false);
       return;
     }
 
