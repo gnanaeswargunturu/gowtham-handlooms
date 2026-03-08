@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
 import { MapPin, Plus, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,13 +42,11 @@ export default function Checkout() {
   });
 
   if (!user) {
-    navigate("/auth");
-    return null;
+    return <Navigate to="/auth" replace />;
   }
 
   if (items.length === 0) {
-    navigate("/cart");
-    return null;
+    return <Navigate to="/cart" replace />;
   }
 
   const shippingCost = subtotal >= 5000 ? 0 : 150;
