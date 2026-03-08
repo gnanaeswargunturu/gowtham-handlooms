@@ -26,6 +26,7 @@ export function useCart() {
   const fetchCart = useCallback(async () => {
     if (!user) {
       setItems([]);
+      setIsLoading(false);
       return;
     }
 
