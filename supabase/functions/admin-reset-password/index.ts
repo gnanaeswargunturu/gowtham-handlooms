@@ -15,37 +15,38 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const { user_id, new_password } = await req.json();
+  const { user_id, new_password, service_key } = await req.json();
 
-  // Verify caller is admin
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    });
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-  const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
-  if (!caller) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    });
-  }
-
-  const { data: roleData } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", caller.id)
-    .eq("role", "admin");
-
-  if (!roleData || roleData.length === 0) {
-    return new Response(JSON.stringify({ error: "Admin only" }), {
-      status: 403,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-    });
+  // Allow service role calls (for admin bootstrap) or admin-authenticated calls
+  const isServiceCall = service_key === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  
+  if (!isServiceCall) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+    const { data: roleData } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", caller.id)
+      .eq("role", "admin");
+    if (!roleData || roleData.length === 0) {
+      return new Response(JSON.stringify({ error: "Admin only" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
   }
 
   const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
