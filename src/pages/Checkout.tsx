@@ -42,13 +42,11 @@ export default function Checkout() {
   });
 
   if (!user) {
-    navigate("/auth");
-    return null;
+    return <Navigate to="/auth" replace />;
   }
 
   if (items.length === 0) {
-    navigate("/cart");
-    return null;
+    return <Navigate to="/cart" replace />;
   }
 
   const shippingCost = subtotal >= 5000 ? 0 : 150;
